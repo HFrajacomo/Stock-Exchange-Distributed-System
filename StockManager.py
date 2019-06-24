@@ -43,7 +43,7 @@ def stock_manager():
 		value = randomize_change(value, elasticity)
 		sleep(1)
 		try:
-			s.send(byt(name + " " + str(value)))
+			s.send_string(name + " " + str(value))
 		except zmq.error.ZMQError:
 			print("Failed to send data")
 
@@ -54,7 +54,7 @@ if(__name__ == '__main__'):
 
 	process = []
 
-	for i in range(0,10):
+	for i in range(0,1):
 		process.append(Process(target=stock_manager))
 
 	for th in process:
