@@ -35,20 +35,24 @@ def handle_stock():
 def Worker(ident, con_string):
 	context = zmq.Context()
 	work_socket = context.socket(zmq.DEALER)
+	send_socket = context.socket(zmq.DEALER)
+
 	work_socket.setsockopt(zmq.IDENTITY, ident)
+	send_socket.setsockopt(zmq.IDENTITY, ident)
+
 	work_socket.connect(con_string)
-	work_socket.send_string("aaa")
+	HOST = "127.0.0.1"
+	send_socket.connect("tcp://" + HOST + ":30002")
 
 	while(True):
-		message = work_socket.recv().decode()
-		print(message)
+		message = work_socket.recv_multipart()[0].decode()
+		send_socket.send_string(message)
 
 
 if __name__ == '__main__':
 	QUIT = False
 
 	try:
-		print("EXECUTANDO ISSO AQUI")
 		handle_stock()
 	except KeyboardInterrupt:
 		QUIT = True
