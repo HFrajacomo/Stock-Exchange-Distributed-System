@@ -1,47 +1,54 @@
 import zmq
+from multiprocessing import Process
 
 def byt(text):
 	return bytes(text, "utf-8")
 
 def handle_stock():
-	global stock_value
+	conns = []
+
+	# Connects to Stock Managers
+	context = zmq.Context()
+	receive_socket = context.socket(zmq.ROUTER)
+	sending_socket = context.socket(zmq.ROUTER)
+
+	HOST = "127.0.0.1"
+	PORT = 33000
+	con_string = "tcp://" + HOST + ":" + str(PORT)
+	con_string2 = "tcp://" + HOST + ":" + str(PORT+1)
+
+	receive_socket.bind(con_string)
+	sending_socket.bind(con_string2)
 
 	while(not QUIT):
-		address = receive_socket.recv(4096)
-		message = receive_socket.recv(4096).decode()
+
+		address, message = receive_socket.recv_multipart()
+		message = message.decode()
 		stock = message.split(" ")[0]
-		value = message.split(" ")[1]
-		stock_value[message] = value
-		print(stock + " " + value)
-		sending_socket.send(byt(stock + " " + value))
-'''
-def handle_worker():
-	global addresses
-	global conn_id
 
-	while(not QUIT):
-		ad = sending_socket.recv_multipart()[0]
-		addresses[ad] = conn_id
-		conn_id += 1
-'''
+		if(stock not in conns):
+			conns.append(stock)
+			Process(target=Worker, args=(byt(stock + "00"), con_string2)).start()
+		
+		sending_socket.send_multipart([byt(stock + "00"), byt(message)])
 
-stock_value = {}
-addresses = {}
-QUIT = False
+def Worker(ident, con_string):
+	context = zmq.Context()
+	work_socket = context.socket(zmq.DEALER)
+	work_socket.setsockopt(zmq.IDENTITY, ident)
+	work_socket.connect(con_string)
+	work_socket.send_string("aaa")
 
-conn_id = 0
-context = zmq.Context()
-receive_socket = context.socket(zmq.ROUTER)
-sending_socket = context.socket(zmq.ROUTER)
-HOST = "127.0.0.1"
-PORT = 33000
-con_string = "tcp://" + HOST + ":" + str(PORT)
-con_string2 = "tcp://" + HOST + ":" + str(PORT+1)
+	while(True):
+		message = work_socket.recv().decode()
+		print(message)
 
-receive_socket.bind(con_string)
-sending_socket.bind(con_string2)
 
-try:
-	handle_stock()
-except KeyboardInterrupt:
-	QUIT = True
+if __name__ == '__main__':
+	QUIT = False
+
+	try:
+		print("EXECUTANDO ISSO AQUI")
+		handle_stock()
+	except KeyboardInterrupt:
+		QUIT = True

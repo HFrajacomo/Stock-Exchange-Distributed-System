@@ -54,7 +54,7 @@ if(__name__ == '__main__'):
 
 	process = []
 
-	for i in range(0,1):
+	for i in range(0,10):
 		process.append(Process(target=stock_manager))
 
 	for th in process:
