@@ -1,29 +1,52 @@
 import zmq
-from threading import Thread
+from threading import Thread, Event
+from time import sleep
 from Message import NetMessage
+
+def byt(text):
+	return bytes(text, "utf-8")
 
 def monitor():
 	global QUIT
 	global all_stock
 
 	while(not QUIT):
+		
 		message = receive_socket.recv_multipart()[1].decode()
 		stock = message.split(" ")[0]
 		value = message.split(" ")[1]
-		all_stock[stock] = value
+		all_stock[stock] = message
 
-		print(all_stock.values())
-		print()
-
-
-def receive_requests():
+def publish_stocks():
 	global QUIT
+	global connections
 
 	while(not QUIT):
-		message = client_socket.recv_multipart()[1].decode()
-		print(message)
+		sleep(1)
+		print(all_stock)
+		for con in connections:
+			client_socket.send_multipart([byt(con), byt(";".join(all_stock.values()))]) #";".join(all_stock.values())
+
+
+def receive_requests(client_socket):
+	global QUIT
+	global connections
+
+	while(not QUIT):
+		try:
+			message = client_socket.recv_multipart(zmq.NOBLOCK)[1].decode()
+		except zmq.Again:
+			sleep(0.001)
+			continue
+
 		m = NetMessage(message, rebuild=True)
-		print(m)
+
+		if(m.get("stamp") == "LIVE"):
+			connections.append(m.get("sender"))
+			print(m)
+		elif(m.get("stamp") == "Buy"):
+			print(m)
+
 
 
 # Socket settings
@@ -35,6 +58,7 @@ HOST = "127.0.0.1"
 PORT = "30002"
 con_string = "tcp://" + HOST + ":" + PORT
 con_string2 = "tcp://" + HOST + ":" + "30003"
+connections = []
 
 receive_socket.bind(con_string)
 client_socket.bind(con_string2)
@@ -45,8 +69,9 @@ threads = []
 QUIT = False
 
 try:
-	#threads.append(Thread(target=monitor))
-	threads.append(Thread(target=receive_requests))
+	threads.append(Thread(target=monitor))
+	threads.append(Thread(target=receive_requests, args=(client_socket,)))
+	threads.append(Thread(target=publish_stocks))
 
 	for th in threads:
 		th.start()

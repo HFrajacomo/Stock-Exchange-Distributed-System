@@ -1,6 +1,9 @@
 import zmq
 from Message import NetMessage
 import socket
+from threading import Thread, Event
+from time import sleep
+import os
 
 def byt(text):
 	return bytes(text, "utf-8")
@@ -25,6 +28,27 @@ def async_send():
 			s.send_string(ms)
 			continue
 
+def async_receive(s):
+	global QUIT
+	counter = 0
+
+	while(not QUIT):
+		try:
+			message = s.recv_string(zmq.NOBLOCK)
+		except zmq.Again:
+			continue
+
+		os.system("cls" if os.name == 'nt' else 'clear')
+
+		message = message.split(";")
+
+		for i in range(len(message)):
+			counter += 1
+			if(counter == 3 or i+1 == len(message)):
+				print(message[i])
+				counter = 0
+			else:
+				print(message[i], end="\t") 
 
 IP = "127.0.0.1"
 
@@ -36,9 +60,22 @@ con_string = "tcp://" + HOST + ":" + PORT
 s.setsockopt(zmq.IDENTITY, byt(IP))
 s.connect(con_string)
 
+live_message = "LIVE;" + IP + ";;" + "-1"
+s.send_string(live_message)
+
 QUIT = False
+threads = []
+LOCK = Event()
+LOCK.set()
 
 try:
-	async_send()
+	threads.append(Thread(target=async_send))
+	threads.append(Thread(target=async_receive, args=(s,)))
+
+	for th in threads:
+		th.start()
+
+	for th in threads:
+		th.join()
 except KeyboardInterrupt:
 	QUIT = True

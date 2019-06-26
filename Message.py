@@ -4,7 +4,6 @@ class NetMessage:
 
 		if(rebuild):
 			splt = stamp.split(";")
-			print(splt)
 			self.data["stamp"] = splt[0]
 			self.data["sender"] = splt[1]
 			self.data["message"] = splt[2]
@@ -20,3 +19,6 @@ class NetMessage:
 
 	def serialize(self):
 		return ";".join([x for x in self.data.values()])
+
+	def get(self, text):
+		return self.data[text]
