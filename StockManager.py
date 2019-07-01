@@ -2,6 +2,7 @@ import zmq
 import random as rd
 from time import sleep
 from multiprocessing import freeze_support, Process
+from Message import NetMessage
 
 # String to byte conversion
 def byt(text):
@@ -27,6 +28,7 @@ def random_stock_name():
 # Each stock manager process separatedly
 def stock_manager():
 	global QUIT
+	global local_counter
 
 	# Connect to Broker
 	context = zmq.Context()
@@ -42,12 +44,18 @@ def stock_manager():
 	while(not QUIT):
 		value = randomize_change(value, elasticity)
 		sleep(1)
+
+		m = NetMessage("Stock", "", name + " " + str(value), str(local_counter))
+		m = m.serialize()
+
 		try:
-			s.send_string(name + " " + str(value))
+			s.send_string(m)
 		except zmq.error.ZMQError:
 			print("Failed to send data")
+		local_counter += 1
 
 QUIT = False
+local_counter = 0
 
 if(__name__ == '__main__'):
 	freeze_support()

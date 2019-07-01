@@ -1,5 +1,6 @@
 import zmq
 from multiprocessing import Process
+from Message import NetMessage
 
 def byt(text):
 	return bytes(text, "utf-8")
@@ -24,13 +25,17 @@ def handle_stock():
 
 		address, message = receive_socket.recv_multipart()
 		message = message.decode()
-		stock = message.split(" ")[0]
+		m = NetMessage(message, rebuild=True)
+
+		stock = m.get("message").split(" ")[0]
+		message = m.get("message")
 
 		if(stock not in conns):
 			conns.append(stock)
 			Process(target=Worker, args=(byt(stock + "00"), con_string2)).start()
 		
 		sending_socket.send_multipart([byt(stock + "00"), byt(message)])
+
 
 def Worker(ident, con_string):
 	context = zmq.Context()

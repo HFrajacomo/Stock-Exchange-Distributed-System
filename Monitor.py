@@ -23,7 +23,6 @@ def publish_stocks():
 
 	while(not QUIT):
 		sleep(1)
-		print(all_stock)
 		for con in connections:
 			client_socket.send_multipart([byt(con), byt(";".join(all_stock.values()))]) #";".join(all_stock.values())
 
@@ -44,8 +43,10 @@ def receive_requests(client_socket):
 		if(m.get("stamp") == "LIVE"):
 			connections.append(m.get("sender"))
 			print(m)
+			print()
 		elif(m.get("stamp") == "Buy"):
 			print(m)
+			print()
 
 
 
@@ -65,6 +66,7 @@ client_socket.bind(con_string2)
 
 # General Settings
 all_stock = {}
+timestamps = {}
 threads = []
 QUIT = False
 
