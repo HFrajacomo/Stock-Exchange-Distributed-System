@@ -2,9 +2,11 @@ import zmq
 from multiprocessing import Process
 from Message import NetMessage
 
+# String to byte conversion
 def byt(text):
 	return bytes(text, "utf-8")
 
+# Broker routing function
 def handle_stock():
 	conns = []
 
@@ -36,7 +38,7 @@ def handle_stock():
 		
 		sending_socket.send_multipart([byt(stock + "00"), byt(message)])
 
-
+# Worker main function
 def Worker(ident, con_string):
 	context = zmq.Context()
 	work_socket = context.socket(zmq.DEALER)

@@ -5,6 +5,7 @@ from threading import Thread, Event
 from time import sleep
 import os
 
+# String to byte conversion
 def byt(text):
 	return bytes(text, "utf-8")
 
@@ -16,6 +17,7 @@ sub <stock> -> Subs to a stock
 unsub <stock> -> Unsubs from a stock
 '''
 
+# Send commands to Monitor (RPC)
 def async_send():
 	global QUIT
 
@@ -28,6 +30,7 @@ def async_send():
 			s.send_string(ms)
 			continue
 
+# Receives from Monitor
 def async_receive(s):
 	global QUIT
 	counter = 0

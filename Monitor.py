@@ -3,9 +3,11 @@ from threading import Thread, Event
 from time import sleep
 from Message import NetMessage
 
+# String to byte conversion
 def byt(text):
 	return bytes(text, "utf-8")
 
+# Monitor receiving function
 def monitor():
 	global QUIT
 	global all_stock
@@ -17,6 +19,7 @@ def monitor():
 		value = message.split(" ")[1]
 		all_stock[stock] = message
 
+# Monitor send function
 def publish_stocks():
 	global QUIT
 	global connections
@@ -26,7 +29,7 @@ def publish_stocks():
 		for con in connections:
 			client_socket.send_multipart([byt(con), byt(";".join(all_stock.values()))]) #";".join(all_stock.values())
 
-
+# Receive LIVE packet from clients
 def receive_requests(client_socket):
 	global QUIT
 	global connections
